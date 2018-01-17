@@ -1,7 +1,7 @@
 # Usage
 
 * install dependencies using `npm install`
-* run with `node src/index.js [stats url]`, e.g.
+* run with `node src/index.js [stats endpoint]`, e.g.
   `node src/index.js localhost:9999`
 * navigate screens with left and right arrow keys
 * on clusters screen, select clusters with up and down arrow keys. Pressing
