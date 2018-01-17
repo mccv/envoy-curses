@@ -17,12 +17,10 @@ class ClustersPane extends Box {
     this.chartedStat = 'rq_total'
     this.availableStats = []
     this.selectedClusterName = ''
-
-
-    this.append(new Menu({
-      screen: this.screen,
-      selected: 'Clusters',
-    }))
+    this.tableData = {
+      headers: ['cluster', 'cx act', 'rq act', 'rq total', 'members', 'healthy'],
+      data: [],
+    }
 
     /* eslint camelcase: ["error", {properties: "never"}]*/
     this.reservedHostnames = {
@@ -45,7 +43,6 @@ class ClustersPane extends Box {
       columnSpacing: 2,
       columnWidth: [20, 8, 8, 8, 8, 8],
     })
-    this.append(this.clustersTable)
 
     this.connectionsLine = contrib.line(
       {
@@ -59,7 +56,6 @@ class ClustersPane extends Box {
         legend: {width: 20},
         style: Theme.style.chart,
       })
-    this.append(this.connectionsLine)
 
     let searchStyle = Object.assign({
       item: {
@@ -86,7 +82,6 @@ class ClustersPane extends Box {
       keys: true,
       interactive: true,
     })
-    this.append(this.statSearch)
 
     this.selectStat = (s) => {
       if (s) {
@@ -130,12 +125,9 @@ class ClustersPane extends Box {
       this.connectionsSeries = series
     }
 
-    this.updateCharts = () => {
+    this.updateTableData = () => {
       let clusterNames = this.clusters.getClusterNames()
-      let tableData = {
-        headers: ['cluster', 'cx act', 'rq act', 'rq total', 'members', 'healthy'],
-        data: [],
-      }
+      let newTableData = []
       clusterNames.forEach(c => {
         let row = []
         if (!this.selectedClusterName) {
@@ -148,8 +140,12 @@ class ClustersPane extends Box {
         row.push(this.stats.getStat(`cluster.${c}.upstream_rq_total`))
         row.push(this.stats.getStat(`cluster.${c}.membership_total`))
         row.push(this.stats.getStat(`cluster.${c}.membership_healthy`))
-        tableData.data.push(row)
+        newTableData.push(row)
       })
+      this.tableData.data = newTableData
+    }
+
+    this.updateChartData = () => {
       this.connectionsSeries.forEach(s => {
         let currentSeries = this.clusters.getSeries(s.cluster_name, s.stat_namespace, s.stat_name)
         if (currentSeries) {
@@ -160,42 +156,66 @@ class ClustersPane extends Box {
           this.log.debug(`could not find series ${seriesName}`)
         }
       })
+      this.connectionsLine.setLabel(`${this.selectedClusterName} - ${this.chartedStat}`)
+    }
+
+    this.updateView = () => {
       if (this.parent) {
         this.connectionsLine.setData(this.connectionsSeries)
-        this.connectionsLine.setLabel(`${this.selectedClusterName} - ${this.chartedStat}`)
-        this.clustersTable.setData(tableData)
+        this.clustersTable.setData(this.tableData)
         this.screen.render()
       }
     }
 
-    this.on('attach', () => {
+    this.connectionsLine.on('attach', (el) => {
       this.clustersTable.focus()
     })
 
     this.clustersTable.rows.on('select', (cluster) => {
       this.selectedClusterName = cluster.content.split(/\s+/)[0]
       this.setCharts()
-      this.updateCharts()
+      this.updateChartData()
+      this.updateView()
     })
 
     this.clusters.on('updated', () => {
-      this.updateCharts()
+      this.updateChartData()
+      this.updateTableData()
+      this.updateView()
     })
 
     this.on('element keypress', (ch, key) => {
-      if (key === '/' || key === '?') {
-        this.statSearch.focus()
-        this.statSearch.show()
-        this.statSearch.once('action', (el, selected) => {
-          this.statSearch.hide();
-          if (el) {
-            this.selectStat(el.content)
-          }
-          this.clustersTable.focus()
+      if (!this.detached) {
+        if (key === '/' || key === '?') {
+          this.statSearch.focus()
+          this.statSearch.show()
           this.screen.render()
-        });
+          this.statSearch.once('action', (el, selected) => {
+            this.statSearch.hide();
+            if (el) {
+              this.selectStat(el.content)
+            }
+            this.clustersTable.focus()
+            this.updateChartData()
+            this.updateView()
+          });
+        }
       }
     })
+
+    this.show = (screen) => {
+      this.append(new Menu({
+        screen: screen,
+        selected: 'Clusters',
+      }))
+      this.append(this.clustersTable)
+      this.append(this.connectionsLine)
+      this.append(this.statSearch)
+      screen.append(this)
+      this.updateChartData()
+      this.updateTableData()
+      this.updateView()
+    }
   }
 }
 

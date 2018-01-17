@@ -16,10 +16,6 @@ class Server extends Box {
     this.refresh = false
     this.stats = options.stats
     this.log = options.log
-    this.append(new Menu({
-      screen: this.screen,
-      selected: 'Server',
-    }))
 
     this.gauges = [
       {
@@ -56,27 +52,6 @@ class Server extends Box {
       },
     ]
 
-    for (let i = 0; i < this.gauges.length; i++) {
-      let label = Box({
-        top: Math.floor(i/2) + 3,
-        left: `${50*(i%2)}%`,
-        height: 1,
-        width: '25%',
-        style: Theme.style.nofocus,
-        content: this.gauges[i].label,
-      })
-      let target = Box({
-        top: Math.floor(i/2) + 3,
-        left: `${50*(i%2) + 25}%`,
-        height: 1,
-        width: '25%',
-        style: Theme.style.nofocus,
-        content: 'tbd',
-      })
-      this.gauges[i].target = target
-      this.append(label)
-      this.append(target)
-    }
 
     /* eslint camelcase: ["error", {properties: "never"}]*/
     this.memorySeries = [
@@ -107,7 +82,6 @@ class Server extends Box {
         },
         style: Theme.style.chart,
       })
-    this.append(this.memoryLine)
 
     this.connectionsSeries = [
       {
@@ -137,7 +111,6 @@ class Server extends Box {
         },
         style: Theme.style.chart,
       })
-    this.append(this.connectionsLine)
 
     this.stats.on('updated', () => {
       this.gauges.forEach(g => {
@@ -169,6 +142,41 @@ class Server extends Box {
         this.screen.render()
       }
     })
+
+    this.appendGauges = () => {
+      for (let i = 0; i < this.gauges.length; i++) {
+        let label = Box({
+          top: Math.floor(i/2) + 3,
+          left: `${50*(i%2)}%`,
+          height: 1,
+          width: '25%',
+          style: Theme.style.nofocus,
+          content: this.gauges[i].label,
+        })
+        let target = Box({
+          top: Math.floor(i/2) + 3,
+          left: `${50*(i%2) + 25}%`,
+          height: 1,
+          width: '25%',
+          style: Theme.style.nofocus,
+          content: 'tbd',
+        })
+        this.gauges[i].target = target
+        this.append(label)
+        this.append(target)
+      }
+    }
+
+    this.show = (screen) => {
+      this.append(new Menu({
+        screen: this.screen,
+        selected: 'Server',
+      }))
+      this.appendGauges()
+      this.append(this.memoryLine)
+      this.append(this.connectionsLine)
+      screen.append(this)
+    }
   }
 }
 

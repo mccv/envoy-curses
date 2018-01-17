@@ -140,7 +140,11 @@ class Clusters extends EventEmitter {
       }
       return null
     }
-    setInterval(this.pollStats, this.pollingInterval)
+
+    this.start = () => {
+      this.pollStats()
+      setInterval(this.pollStats, this.pollingInterval)
+    }
   }
 }
 

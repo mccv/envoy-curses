@@ -61,7 +61,7 @@ let pickColor = (i) => {
   return blessed.colors.hexToRGB(color)
 }
 
-let style ={
+let style = {
   base: {
     fg: pickColor(6),
     bg: 'black',
@@ -76,6 +76,15 @@ let style ={
       fg: pickColor(1),
     },
   },
+}
+
+let applyStyle = (options, selector) => {
+  let toApply = style.base
+  if (selector) {
+    toApply = style[selector]
+  }
+  Object.assign(options, {style: toApply})
+  return options
 }
 
 style.nofocus = {
@@ -115,6 +124,7 @@ let Theme = {
   palette: palette,
   style: style,
   pickChartColor: pickChartColor,
+  applyStyle: applyStyle
 }
 
 module.exports = Theme

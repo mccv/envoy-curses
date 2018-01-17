@@ -2,32 +2,33 @@
 let blessed = require('blessed')
 let contrib = require('blessed-contrib')
 let Carousel = contrib.carousel
-let log = require('simple-node-logger').createSimpleFileLogger('envoy.log')
-let Listeners = require('./listeners.js')
-let ClustersPane = require('./clusters_pane.js')
+let log = require('simple-node-logger').createSimpleFileLogger('envoy-curses.log')
 let Stats = require('./stats.js')
+let StatsPane = require('./stats_pane.js')
 let Clusters = require('./clusters.js')
+let ClustersPane = require('./clusters_pane.js')
 let Server = require('./server.js')
-let HttpPane = require('./http.js')
 
 let screen = blessed.screen()
-let adminServerAddress = '192.168.99.100:8001'
-log.setLevel('debug')
+let adminServerAddress = process.argv[2] || 'localhost:9000'
+console.log(adminServerAddress)
+log.setLevel('info')
 // create layout and widgets
 
 let stats = new Stats({
   log: log,
-  statsURI: `http://${adminServerAddress}/stats`,
+  pollingInterval: 5000,
+  statsURI: `http://${adminServerAddress}/stats`
 })
 
 let clusters = new Clusters({
   log: log,
+  pollingInterval: 5000,
   clustersURI: `http://${adminServerAddress}/clusters`,
 })
 
-let listeners = new Listeners({
+let statsPane = new StatsPane({
   domain: 'http.gke-proxy-80',
-  height: '100%-6',
   stats: stats,
   screen: screen,
   log: log,
@@ -46,38 +47,18 @@ let server = new Server({
   log: log,
 })
 
-let httpPane = new HttpPane({
-  stats: stats,
-  screen: screen,
-  log: log,
-})
-
-function serverPage(serversScreen) {
-  serversScreen.append(server)
-}
-
-function listenersPage(listersScreen) {
-  listersScreen.append(listeners)
-}
-
-function clustersPage(clustersScreen) {
-  clustersScreen.append(clustersPane)
-}
-
-function httpPage(httpScreen) {
-  httpScreen.append(httpPane)
-}
-
 let carousel = new Carousel(
-  [serverPage, clustersPage, listenersPage, httpPage],
+  [server.show, clustersPane.show, statsPane.show],
   { screen: screen,
     interval: 0,
     controlKeys: true,
   }
 )
 
-
-screen.key(['q', 'C-c'], function (ch, key) {
+stats.start()
+clusters.start()
+               
+screen.key(['C-c', 'C-d'], function (ch, key) {
   return process.exit(0);
 });
 

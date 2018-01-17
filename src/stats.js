@@ -13,6 +13,9 @@ class Stats extends EventEmitter {
     this.pollingInterval = this.options.pollingInterval || 1000
     this.bufferIdx = -1
     this.stats = {}
+    this.statsTree = {
+      extended: true
+    }
     this.times = []
 
     this.pollStats = () => {
@@ -40,6 +43,50 @@ class Stats extends EventEmitter {
           this.emit('updated')
         })
       })
+    }
+
+    this.getStatNames = (statsPrefix) => {
+      let names = new Set()
+      Object.getOwnPropertyNames(this.stats).forEach(s => {
+        if (s.startsWith(statsPrefix)) {
+          names.add(s.split('.').pop())
+        }
+      })
+      return names
+    }
+
+    this.getListenerNames = () => {
+      let names = new Set()
+      Object.getOwnPropertyNames(this.stats).forEach(s => {
+        if (s.match(/^listener\.(.*)\.downstream_cx_active/)) {
+          names.add(s.match(/^listener\.(.*)\.downstream_cx_active/)[1])
+        }
+      })
+      return names
+    }
+
+    this.getStatsTable = () => {
+      return Object.getOwnPropertyNames(this.stats).map(s => {
+        return [s, this.getStat(s).toString()]
+      })
+    }
+    this.getStatsTree = () => {
+      Object.getOwnPropertyNames(this.stats).forEach(s => {
+        let nodes = s.split('.')
+        let parent = this.statsTree
+        nodes.forEach(n => {
+          if (!parent.children) {
+            parent.children = {}
+          }
+          if (!parent.children[n]) {
+            parent.children[n] = {
+              statName: s
+            }
+          }
+          parent = parent.children[n]
+        })
+      })
+      return this.statsTree
     }
 
     this.getStat = (statName) => {
@@ -111,7 +158,10 @@ class Stats extends EventEmitter {
       }
       return null
     }
-    setInterval(this.pollStats, this.pollingInterval)
+    this.start = () => {
+      this.pollStats()
+      setInterval(this.pollStats, this.pollingInterval)
+    }
   }
 }
 

@@ -7,10 +7,9 @@ class Menu extends Box {
     super(options)
     this.options = options || {};
     this.sections = this.options.sections || [
-      'Server',
-      'Clusters',
-      'Listeners',
-      'HTTP']
+      '{underline}S{/underline}erver',
+      '{underline}C{/underline}lusters',
+      'S{underline}t{/underline}ats']
 
     this.style = this.options.style || Theme.style.base
     this.options.height = 3
@@ -25,6 +24,7 @@ class Menu extends Box {
       }
       this.append(Box({
         height: 3,
+        tags: true,
         left: `${i*spacing}%`,
         width: `${spacing}%`,
         content: this.sections[i],
