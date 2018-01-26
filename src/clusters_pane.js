@@ -1,3 +1,5 @@
+/* eslint camelcase: ["error", {properties: "never"}]*/
+
 let blessed = require('blessed')
 let Theme = require('./theme')
 let Box = blessed.Box
@@ -22,12 +24,12 @@ class ClustersPane extends Box {
       data: [],
     }
 
-    /* eslint camelcase: ["error", {properties: "never"}]*/
-    this.reservedHostnames = {
-      default_priority: true,
-      high_priority: true,
-      added_via_api: true,
-    }
+    this.connectionsSeries = []
+
+    this.clusterLevelStats = new Set()
+    this.clusterLevelStats.add('default_priority')
+    this.clusterLevelStats.add('high_priority')
+    this.clusterLevelStats.add('added_via_api')
 
     this.clustersTable = contrib.table({
       fg: Theme.style.table.fg,
@@ -86,30 +88,21 @@ class ClustersPane extends Box {
     this.selectStat = (s) => {
       if (s) {
         this.chartedStat = s
-        this.setCharts(this.selectedClusterName)
+        this.updateAvailableStats()
       }
     }
-    this.connectionsSeries = []
 
-    this.setCharts = () => {
+    /**
+     * build a set of all available stats for the currently selected cluster
+     * @returns {null} nothing
+     */
+    this.updateAvailableStats = () => {
       let hostNames = this.clusters.getHostNames(this.selectedClusterName)
-      let series = []
       let newStats = new Set()
       for (let i = 0; i < hostNames.length; i++) {
-        if (!this.reservedHostnames[hostNames[i]]) {
+        if (!this.clusterLevelStats.has(hostNames[i])) {
           this.clusters.getStatNames(this.selectedClusterName, hostNames[i]).forEach(s => {
             newStats.add(s)
-          })
-          series.push({
-            title: hostNames[i],
-            cluster_name: this.selectedClusterName,
-            stat_namespace: hostNames[i],
-            stat_name: this.chartedStat,
-            style: {
-              line: theme.pickChartColor(i, hostNames.length),
-            },
-            x: [],
-            y: [],
           })
         }
       }
@@ -121,10 +114,12 @@ class ClustersPane extends Box {
           this.statSearch.select(i)
         }
       }
-
-      this.connectionsSeries = series
     }
 
+    /**
+     * given a list of cluster names, build the table data for them
+     * @returns {null} nothing
+     */
     this.updateTableData = () => {
       let clusterNames = this.clusters.getClusterNames()
       let newTableData = []
@@ -132,7 +127,7 @@ class ClustersPane extends Box {
         let row = []
         if (!this.selectedClusterName) {
           this.selectedClusterName = c
-          this.setCharts()
+          this.updateAvailableStats()
         }
         row.push(c)
         row.push(this.stats.getStat(`cluster.${c}.upstream_cx_active`))
@@ -145,45 +140,79 @@ class ClustersPane extends Box {
       this.tableData.data = newTableData
     }
 
+    /**
+     * update underlying data model for our chart. Does not actualy attach
+     * the data model to the chart to prevent the chart trying to render when
+     * we're not visible
+     * @returns {null} nothing
+     */
     this.updateChartData = () => {
-      this.connectionsSeries.forEach(s => {
-        let currentSeries = this.clusters.getSeries(s.cluster_name, s.stat_namespace, s.stat_name)
-        if (currentSeries) {
-          s.x = currentSeries.x
-          s.y = currentSeries.y
-        } else {
-          let seriesName = `${s.cluster_name}::${s.stat_namespace}::${s.stat_name}-${currentSeries}`
-          this.log.debug(`could not find series ${seriesName}`)
+      if (!this.selectedClusterName) {
+        return
+      }
+      let hostNames = this.clusters.getHostNames(this.selectedClusterName)
+      let series = []
+      for (let i = 0; i < hostNames.length; i++) {
+        if (!this.clusterLevelStats.has(hostNames[i])) {
+          let currentSeries = this.clusters.getSeries(this.selectedClusterName,
+            hostNames[i],
+            this.chartedStat)
+          if (currentSeries) {
+            series.push({
+              title: hostNames[i],
+              cluster_name: this.selectedClusterName,
+              stat_namespace: hostNames[i],
+              stat_name: this.chartedStat,
+              style: {
+                line: theme.pickChartColor(i, hostNames.length),
+              },
+              x: currentSeries.x,
+              y: currentSeries.y,
+            })
+          }
         }
-      })
+      }
+      this.connectionsSeries = series
       this.connectionsLine.setLabel(`${this.selectedClusterName} - ${this.chartedStat}`)
     }
 
+    /**
+     * actually attach data models to the chart and table, then render screen
+     * @returns {null} nothing
+     */
     this.updateView = () => {
       if (this.parent) {
-        this.connectionsLine.setData(this.connectionsSeries)
+        if (this.connectionsSeries && this.connectionsSeries.length > 0) {
+          this.connectionsLine.setData(this.connectionsSeries)
+        }
         this.clustersTable.setData(this.tableData)
         this.screen.render()
       }
     }
 
-    this.connectionsLine.on('attach', (el) => {
-      this.clustersTable.focus()
-    })
-
+    /**
+     * we've selected a new cluster, so update available stats, the underlying
+     * chart model, and update the view
+     */
     this.clustersTable.rows.on('select', (cluster) => {
       this.selectedClusterName = cluster.content.split(/\s+/)[0]
-      this.setCharts()
+      this.updateAvailableStats()
       this.updateChartData()
       this.updateView()
     })
 
+    /**
+     * our cluster model is updated, so update the chart and table, and render the view
+     */
     this.clusters.on('updated', () => {
       this.updateChartData()
       this.updateTableData()
       this.updateView()
     })
 
+    /**
+     * handle '/' and '?' to launch the stat selection
+     */
     this.on('element keypress', (ch, key) => {
       if (!this.detached) {
         if (key === '/' || key === '?') {
@@ -203,6 +232,10 @@ class ClustersPane extends Box {
       }
     })
 
+    this.on('attach', () => {
+      this.clustersTable.focus()
+    })
+
     this.show = (screen) => {
       this.append(new Menu({
         screen: screen,
@@ -212,8 +245,9 @@ class ClustersPane extends Box {
       this.append(this.connectionsLine)
       this.append(this.statSearch)
       screen.append(this)
-      this.updateChartData()
       this.updateTableData()
+      this.updateAvailableStats()
+      this.updateChartData()
       this.updateView()
     }
   }

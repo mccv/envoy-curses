@@ -15,6 +15,10 @@ class Clusters extends EventEmitter {
     this.clusters = {}
     this.times = []
 
+    /**
+     * call Envoy's <manager>/clusters endpoint, update metrics and stat names
+     * @returns {null} nothing
+     */
     this.pollStats = () => {
       http.get(this.clustersURI, res => {
         let body = '';
@@ -57,17 +61,40 @@ class Clusters extends EventEmitter {
       })
     }
 
+    /**
+     * return an array of cluster names from the last call to the clusters endpoint
+     * @returns {array} cluster names
+     */
     this.getClusterNames = () => {
       return Object.getOwnPropertyNames(this.clusters)
     }
 
+    /**
+     * return an array of all hostnames for the given cluster
+     * @param {string} clusterName name of the cluster to retrieve hosts for
+     * @returns {array} host names
+     */
     this.getHostNames = (clusterName) => {
       return Object.getOwnPropertyNames(this.clusters[clusterName])
     }
 
+    /**
+     * return an array of all available stats for the given cluster and host
+     * @param {string} clusterName name of the cluster to retrieve hosts for
+     * @param {string} statNamespace grouping of stats (e.g. host name) to retrieve stat names for
+     * @returns {array} stat names
+     */
     this.getStatNames = (clusterName, statNamespace) => {
       return Object.getOwnPropertyNames(this.clusters[clusterName][statNamespace])
     }
+
+    /**
+     * return the raw circular buffer for a stat
+     * @param {string} clusterName name of the cluster to retrieve hosts for
+     * @param {string} statNamespace grouping of stats (e.g. host name) to retrieve stat names for
+     * @param {string} statName the actual stat to retrieve
+     * @returns {array} raw stats
+     */
     this.getStat = (clusterName, statNamespace, statName) => {
       if (this.clusters[clusterName] &&
           this.clusters[clusterName][statNamespace] &&
@@ -78,6 +105,15 @@ class Clusters extends EventEmitter {
       return `err - ${clusterName}::${statNamespace}${statName}`
     }
 
+    /**
+     * compute deltas over the raw circular buffer, returning a metric series.
+     * will return an object containing an x array (the metric value) and y array
+     * (the textual timestamps of the metric values)
+     * @param {string} clusterName name of the cluster to retrieve hosts for
+     * @param {string} statNamespace grouping of stats (e.g. host name) to retrieve stat names for
+     * @param {string} statName the actual stat to retrieve
+     * @returns {array} array of delta metrics
+     */
     this.getSeries = (clusterName, statNamespace, statName) => {
       let series = this.clusters[clusterName][statNamespace][statName]
       if (!series) {
@@ -112,6 +148,15 @@ class Clusters extends EventEmitter {
       return null
     }
 
+    /**
+     * returning a gauge series for the given stat.
+     * will return an object containing an x array (the metric value) and y array
+     * (the textual timestamps of the metric values)
+     * @param {string} clusterName name of the cluster to retrieve hosts for
+     * @param {string} statNamespace grouping of stats (e.g. host name) to retrieve stat names for
+     * @param {string} statName the actual stat to retrieve
+     * @returns {array} gauge metrics
+     */
     this.getSeriesAsGauge = (clusterName, statNamespace, statName) => {
       this.log.debug(`looking for ${statName}, bufferIdx=${this.bufferIdx}`)
       let series = this.clusters[clusterName][statNamespace][statName]
@@ -141,6 +186,10 @@ class Clusters extends EventEmitter {
       return null
     }
 
+    /**
+     * stat a timer to poll the cluster endpoint on the given interval
+     * @returns {null} nothing
+     */
     this.start = () => {
       this.pollStats()
       setInterval(this.pollStats, this.pollingInterval)

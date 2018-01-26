@@ -1,3 +1,5 @@
+/* eslint camelcase: ["error", {properties: "never"}]*/
+
 let blessed = require('blessed')
 let Theme = require('./theme')
 let Box = blessed.Box
@@ -53,7 +55,6 @@ class Server extends Box {
     ]
 
 
-    /* eslint camelcase: ["error", {properties: "never"}]*/
     this.memorySeries = [
       {
         title: 'Allocated',

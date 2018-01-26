@@ -11,14 +11,13 @@ let Server = require('./server.js')
 
 let screen = blessed.screen()
 let adminServerAddress = process.argv[2] || 'localhost:9000'
-console.log(adminServerAddress)
 log.setLevel('info')
 // create layout and widgets
 
 let stats = new Stats({
   log: log,
   pollingInterval: 5000,
-  statsURI: `http://${adminServerAddress}/stats`
+  statsURI: `http://${adminServerAddress}/stats`,
 })
 
 let clusters = new Clusters({
@@ -57,7 +56,7 @@ let carousel = new Carousel(
 
 stats.start()
 clusters.start()
-               
+
 screen.key(['C-c', 'C-d'], function (ch, key) {
   return process.exit(0);
 });

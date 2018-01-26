@@ -1,7 +1,6 @@
 let blessed = require('blessed')
 let Theme = require('./theme')
 let Box = blessed.Box
-let Textbox = blessed.Textbox
 let contrib = require('blessed-contrib')
 let Menu = require('./menu.js')
 let ListTable = blessed.ListTable
@@ -18,6 +17,7 @@ class StatsPane extends Box {
     this.chartedStat = 'rq_total'
     this.availableStats = []
     this.selectedListenerName = ''
+    this.statsFilter = null
     this.treeData = {}
     this.legendWidth = 20
 
@@ -28,74 +28,84 @@ class StatsPane extends Box {
       added_via_api: true,
     }
 
-    this.statsSearch = Textbox({
-      content: 'Search',
+    this.statsSearch = Box({
+      label: 'Search',
+      content: '',
       top: 3,
       height: 3,
       fg: Theme.style.base.fg,
       border: {type: 'line', fg: Theme.style.base.border.fg},
       width: '100%',
-      inputOnFocus: true,
       keys: true,
-      mouse: true
+      mouse: true,
     })
 
     this.statsList = ListTable({
       interactive: true,
-      invertSelected: true,
-      mouse: true,
       align: 'left',
       width: '50%-1',
-      top: 4,
-      height: '100%-4',
-      border: {type: 'line', fg: Theme.style.table.border}
+      top: 7,
+      height: '100%-7',
+      border: {type: 'line', fg: Theme.style.table.border},
+      style: {
+        cell: {
+          item: {
+            fg: theme.style.list.item.fg,
+            bg: theme.style.list.item.bg,
+          },
+          selected: {
+            fg: theme.style.list.selected.fg,
+            bg: theme.style.list.selected.bg,
+          },
+        },
+      },
     })
 
     this.connectionsLine = contrib.line(
       {
         label: 'Stats',
         showLegend: true,
-        top: 4,
+        top: 7,
         left: '50%',
         width: '50%',
-        height: '100%-4',
+        height: '100%-7',
         border: {type: 'line', fg: Theme.style.table.border},
         legend: {width: 40},
         style: Theme.style.chart,
       })
 
-    this.selectStat = (s) => {
-      if (s) {
-        this.chartedStat = s
-        this.setCharts(this.selectedListenerName)
-      }
-    }
     this.connectionsSeries = null
 
     this.updateStatNames = () => {
-      let st = this.stats.getStatsTable()
-      this.statsList.setData(this.stats.getStatsTable())
+      let selected = this.statsList.selected
+      let st = this.stats.getStatsTable(new RegExp(`.*${this.statsSearch.content}.*`))
+      this.statsList.setData(st)
+      if (selected < this.statsList.items.length) {
+        this.statsList.select(selected)
+      }
     }
 
-    this.statsList.on('select', (s) => {
-      this.statName = s.statName
-      this.updateChartData()
-      this.updateView()
+    this.statsList.on('select item', (selected, idx) => {
+      if (selected.content) {
+        this.chartedStat = selected.content.split(/\s+/)[0]
+        this.updateChartData()
+        this.updateView()
+      }
     })
+
     this.updateChartData = () => {
-      if (this.statName) {
-        let series = []
-        let seriesData = this.stats.getSeries(this.statName)
-        let title = this.statName
+      if (this.chartedStat) {
+        let seriesData = this.stats.getSeries(this.chartedStat)
+        let title = this.chartedStat
         if (title.length > this.legendWidth) {
           title = `...${title.substring(title.length - this.legendWidth - 3)}`
         }
         if (seriesData) {
           this.connectionsSeries = [{
             title: title,
-            stat_name: this.statName,
+            stat_name: this.chartedStat,
             style: {
-            line: theme.pickChartColor(0, 10)
+              line: theme.pickChartColor(0, 10),
             },
             x: seriesData.x,
             y: seriesData.y,
@@ -110,18 +120,41 @@ class StatsPane extends Box {
           this.connectionsLine.setData(this.connectionsSeries)
           this.connectionsLine.setLabel(`${this.chartedStat}`)
         }
-        this.screen.render()
       }
     }
 
     this.on('attach', () => {
-      this.statsList.focus()
+      this.statsSearch.focus()
+    })
+
+    this.statsSearch.on('keypress', (k, d) => {
+      if (d.full.length === 1) {
+        this.statsSearch.content = this.statsSearch.content + d.full
+        this.updateStatNames()
+        this.statsList.select(1)
+      } else {
+        let content = this.statsSearch.content
+        if (d.name === 'backspace') {
+          content = content.substr(0, content.length - 1)
+          this.statsSearch.content = content
+        } else if (d.name === 'down') {
+          this.statsList.down()
+        } else if (d.name === 'up') {
+          this.statsList.up()
+        } else if (d.name === 'escape') {
+          this.statsSearch.content = ''
+          this.updateStatNames()
+          this.statsList.select(1)
+        }
+      }
+      this.screen.render()
     })
 
     this.stats.on('updated', () => {
-      this.updateChartData()
       this.updateStatNames()
+      this.updateChartData()
       this.updateView()
+      this.screen.render()
     })
 
     this.show = (screen) => {
@@ -130,8 +163,8 @@ class StatsPane extends Box {
         selected: 'Stats',
       }))
       this.append(this.statsSearch)
-      //this.append(this.statsList)
-      //this.append(this.connectionsLine)
+      this.append(this.statsList)
+      this.append(this.connectionsLine)
       screen.append(this)
       this.updateStatNames()
       this.updateChartData()

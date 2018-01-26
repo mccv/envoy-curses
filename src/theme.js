@@ -99,6 +99,7 @@ style.list = {
   border: style.base.border,
   focus: style.base.focus,
   selected: {
+    fg: pickColor(1),
     bg: pickColor(5),
   },
   item: {
@@ -124,7 +125,7 @@ let Theme = {
   palette: palette,
   style: style,
   pickChartColor: pickChartColor,
-  applyStyle: applyStyle
+  applyStyle: applyStyle,
 }
 
 module.exports = Theme

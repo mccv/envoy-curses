@@ -14,7 +14,7 @@ class Stats extends EventEmitter {
     this.bufferIdx = -1
     this.stats = {}
     this.statsTree = {
-      extended: true
+      extended: true,
     }
     this.times = []
 
@@ -65,10 +65,14 @@ class Stats extends EventEmitter {
       return names
     }
 
-    this.getStatsTable = () => {
-      return Object.getOwnPropertyNames(this.stats).map(s => {
+    this.getStatsTable = (match) => {
+      let stats = Object.getOwnPropertyNames(this.stats).filter(s => {
+        return match.exec(s)
+      }).map(s => {
         return [s, this.getStat(s).toString()]
       })
+      stats.unshift(['Stat Name', 'Stat Value'])
+      return stats
     }
     this.getStatsTree = () => {
       Object.getOwnPropertyNames(this.stats).forEach(s => {
@@ -80,7 +84,7 @@ class Stats extends EventEmitter {
           }
           if (!parent.children[n]) {
             parent.children[n] = {
-              statName: s
+              statName: s,
             }
           }
           parent = parent.children[n]
