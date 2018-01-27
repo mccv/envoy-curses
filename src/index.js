@@ -11,18 +11,19 @@ let Server = require('./server.js')
 
 let screen = blessed.screen()
 let adminServerAddress = process.argv[2] || 'localhost:9000'
+let pollingInterval = parseInt(process.argv[3]) || 1000
 log.setLevel('info')
 // create layout and widgets
 
 let stats = new Stats({
   log: log,
-  pollingInterval: 5000,
+  pollingInterval: pollingInterval,
   statsURI: `http://${adminServerAddress}/stats`,
 })
 
 let clusters = new Clusters({
   log: log,
-  pollingInterval: 5000,
+  pollingInterval: pollingInterval,
   clustersURI: `http://${adminServerAddress}/clusters`,
 })
 
