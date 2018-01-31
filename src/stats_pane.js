@@ -151,10 +151,12 @@ class StatsPane extends Box {
     })
 
     this.stats.on('updated', () => {
-      this.updateStatNames()
-      this.updateChartData()
-      this.updateView()
-      this.screen.render()
+      if (this.parent) {
+        this.updateStatNames()
+        this.updateChartData()
+        this.updateView()
+        this.screen.render()
+      }
     })
 
     this.show = (screen) => {
@@ -162,13 +164,13 @@ class StatsPane extends Box {
         screen: screen,
         selected: 'Stats',
       }))
+      screen.append(this)
       this.append(this.statsSearch)
       this.append(this.statsList)
       this.append(this.connectionsLine)
-      screen.append(this)
-      this.updateStatNames()
-      this.updateChartData()
       this.updateView()
+      this.updateChartData()
+      this.updateStatNames()
       this.statsSearch.focus()
     }
   }
