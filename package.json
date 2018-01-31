@@ -13,6 +13,7 @@
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.5",
     "dateformat": "^3.0.2",
+    "node-fetch": "^1.7.3",
     "simple-node-logger": "^0.93.33"
   },
   "devDependencies": {
