@@ -48,7 +48,9 @@ let server = new Server({
 })
 
 let carousel = new Carousel(
-  [server.show, clustersPane.show, statsPane.show],
+  [server.show.bind(server),
+    clustersPane.show.bind(clustersPane),
+    statsPane.show.bind(statsPane)],
   { screen: screen,
     interval: 0,
     controlKeys: true,

@@ -7,9 +7,9 @@ class Menu extends Box {
     super(options)
     this.options = options || {};
     this.sections = this.options.sections || [
-      '{underline}S{/underline}erver',
-      '{underline}C{/underline}lusters',
-      'S{underline}t{/underline}ats']
+      'Server',
+      'Clusters',
+      'Stats']
 
     this.style = this.options.style || Theme.style.base
     this.options.height = 3

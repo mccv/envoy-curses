@@ -115,7 +115,7 @@ class Server extends Box {
 
     this.stats.on('updated', () => {
       this.gauges.forEach(g => {
-        g.target.content = '' + this.stats.getStat(g.stat)
+        g.target.content = '' + this.stats.getCurrentStatValue(g.stat)
       })
       this.memorySeries.forEach(s => {
         this.log.debug(`getting stat ${s.stat_name}`)
@@ -167,17 +167,17 @@ class Server extends Box {
         this.append(target)
       }
     }
+  }
 
-    this.show = (screen) => {
-      this.append(new Menu({
-        screen: this.screen,
-        selected: 'Server',
-      }))
-      this.appendGauges()
-      this.append(this.memoryLine)
-      this.append(this.connectionsLine)
-      screen.append(this)
-    }
+  show(screen) {
+    this.append(new Menu({
+      screen: this.screen,
+      selected: 'Server',
+    }))
+    this.appendGauges()
+    this.append(this.memoryLine)
+    this.append(this.connectionsLine)
+    screen.append(this)
   }
 }
 

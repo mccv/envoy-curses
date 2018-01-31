@@ -85,111 +85,6 @@ class ClustersPane extends Box {
       interactive: true,
     })
 
-    this.selectStat = (s) => {
-      if (s) {
-        this.chartedStat = s
-        this.updateAvailableStats()
-      }
-    }
-
-    /**
-     * build a set of all available stats for the currently selected cluster
-     * @returns {null} nothing
-     */
-    this.updateAvailableStats = () => {
-      let hostNames = this.clusters.getHostNames(this.selectedClusterName)
-      let newStats = new Set()
-      for (let i = 0; i < hostNames.length; i++) {
-        if (!this.clusterLevelStats.has(hostNames[i])) {
-          this.clusters.getStatNames(this.selectedClusterName, hostNames[i]).forEach(s => {
-            newStats.add(s)
-          })
-        }
-      }
-      this.statSearch.clearItems()
-      this.availableStats = Array.from(newStats).sort()
-      for (let i = 0; i < this.availableStats.length; i++) {
-        this.statSearch.addItem(this.availableStats[i])
-        if (this.availableStats[i] === this.chartedStat) {
-          this.statSearch.select(i)
-        }
-      }
-    }
-
-    /**
-     * given a list of cluster names, build the table data for them
-     * @returns {null} nothing
-     */
-    this.updateTableData = () => {
-      let clusterNames = this.clusters.getClusterNames()
-      let newTableData = []
-      clusterNames.forEach(c => {
-        let row = []
-        if (!this.selectedClusterName) {
-          this.selectedClusterName = c
-          this.updateAvailableStats()
-        }
-        row.push(c)
-        row.push(this.stats.getStat(`cluster.${c}.upstream_cx_active`))
-        row.push(this.stats.getStat(`cluster.${c}.upstream_rq_active`))
-        row.push(this.stats.getStat(`cluster.${c}.upstream_rq_total`))
-        row.push(this.stats.getStat(`cluster.${c}.membership_total`))
-        row.push(this.stats.getStat(`cluster.${c}.membership_healthy`))
-        newTableData.push(row)
-      })
-      this.tableData.data = newTableData
-    }
-
-    /**
-     * update underlying data model for our chart. Does not actualy attach
-     * the data model to the chart to prevent the chart trying to render when
-     * we're not visible
-     * @returns {null} nothing
-     */
-    this.updateChartData = () => {
-      if (!this.selectedClusterName) {
-        return
-      }
-      let hostNames = this.clusters.getHostNames(this.selectedClusterName)
-      let series = []
-      for (let i = 0; i < hostNames.length; i++) {
-        if (!this.clusterLevelStats.has(hostNames[i])) {
-          let currentSeries = this.clusters.getSeries(this.selectedClusterName,
-            hostNames[i],
-            this.chartedStat)
-          if (currentSeries) {
-            series.push({
-              title: hostNames[i],
-              cluster_name: this.selectedClusterName,
-              stat_namespace: hostNames[i],
-              stat_name: this.chartedStat,
-              style: {
-                line: theme.pickChartColor(i, hostNames.length),
-              },
-              x: currentSeries.x,
-              y: currentSeries.y,
-            })
-          }
-        }
-      }
-      this.connectionsSeries = series
-      this.connectionsLine.setLabel(`${this.selectedClusterName} - ${this.chartedStat}`)
-    }
-
-    /**
-     * actually attach data models to the chart and table, then render screen
-     * @returns {null} nothing
-     */
-    this.updateView = () => {
-      if (this.parent) {
-        if (this.connectionsSeries && this.connectionsSeries.length > 0) {
-          this.connectionsLine.setData(this.connectionsSeries)
-        }
-        this.clustersTable.setData(this.tableData)
-        this.screen.render()
-      }
-    }
-
     /**
      * we've selected a new cluster, so update available stats, the underlying
      * chart model, and update the view
@@ -235,21 +130,127 @@ class ClustersPane extends Box {
     this.on('attach', () => {
       this.clustersTable.focus()
     })
+  }
 
-    this.show = (screen) => {
-      this.append(new Menu({
-        screen: screen,
-        selected: 'Clusters',
-      }))
-      this.append(this.clustersTable)
-      this.append(this.connectionsLine)
-      this.append(this.statSearch)
-      screen.append(this)
-      this.updateTableData()
+  selectStat(s) {
+    if (s) {
+      this.chartedStat = s
       this.updateAvailableStats()
-      this.updateChartData()
-      this.updateView()
     }
+  }
+
+  /**
+   * build a set of all available stats for the currently selected cluster
+   * @returns {null} nothing
+   */
+  updateAvailableStats() {
+    let hostNames = this.clusters.getHostNames(this.selectedClusterName)
+    let newStats = new Set()
+    for (let i = 0; i < hostNames.length; i++) {
+      if (!this.clusterLevelStats.has(hostNames[i])) {
+        this.clusters.getStatNames(this.selectedClusterName, hostNames[i]).forEach(s => {
+          newStats.add(s)
+        })
+      }
+    }
+    this.statSearch.clearItems()
+    this.availableStats = Array.from(newStats).sort()
+    for (let i = 0; i < this.availableStats.length; i++) {
+      this.statSearch.addItem(this.availableStats[i])
+      if (this.availableStats[i] === this.chartedStat) {
+        this.statSearch.select(i)
+      }
+    }
+  }
+
+  /**
+   * given a list of cluster names, build the table data for them
+   * @returns {null} nothing
+   */
+  updateTableData() {
+    let clusterNames = this.clusters.getClusterNames()
+    let newTableData = []
+    clusterNames.forEach(c => {
+      let row = []
+      if (!this.selectedClusterName) {
+        this.selectedClusterName = c
+        this.updateAvailableStats()
+      }
+      row.push(c)
+      row.push(this.stats.getCurrentStatValue(`cluster.${c}.upstream_cx_active`))
+      row.push(this.stats.getCurrentStatValue(`cluster.${c}.upstream_rq_active`))
+      row.push(this.stats.getCurrentStatValue(`cluster.${c}.upstream_rq_total`))
+      row.push(this.stats.getCurrentStatValue(`cluster.${c}.membership_total`))
+      row.push(this.stats.getCurrentStatValue(`cluster.${c}.membership_healthy`))
+      newTableData.push(row)
+    })
+    this.tableData.data = newTableData
+  }
+
+  /**
+   * update underlying data model for our chart. Does not actualy attach
+   * the data model to the chart to prevent the chart trying to render when
+   * we're not visible
+   * @returns {null} nothing
+   */
+  updateChartData() {
+    if (!this.selectedClusterName) {
+      return
+    }
+    let hostNames = this.clusters.getHostNames(this.selectedClusterName)
+    let series = []
+    for (let i = 0; i < hostNames.length; i++) {
+      if (!this.clusterLevelStats.has(hostNames[i])) {
+        let currentSeries = this.clusters.getSeries(this.selectedClusterName,
+          hostNames[i],
+          this.chartedStat)
+        if (currentSeries) {
+          series.push({
+            title: hostNames[i],
+            cluster_name: this.selectedClusterName,
+            stat_namespace: hostNames[i],
+            stat_name: this.chartedStat,
+            style: {
+              line: theme.pickChartColor(i, hostNames.length),
+            },
+            x: currentSeries.x,
+            y: currentSeries.y,
+          })
+        }
+      }
+    }
+    this.connectionsSeries = series
+    this.connectionsLine.setLabel(`${this.selectedClusterName} - ${this.chartedStat}`)
+  }
+
+  /**
+   * actually attach data models to the chart and table, then render screen
+   * @returns {null} nothing
+   */
+  updateView() {
+    if (this.parent) {
+      if (this.connectionsSeries && this.connectionsSeries.length > 0) {
+        this.connectionsLine.setData(this.connectionsSeries)
+      }
+      this.clustersTable.setData(this.tableData)
+      this.screen.render()
+    }
+  }
+
+
+  show(screen) {
+    this.append(new Menu({
+      screen: screen,
+      selected: 'Clusters',
+    }))
+    this.append(this.clustersTable)
+    this.append(this.connectionsLine)
+    this.append(this.statSearch)
+    screen.append(this)
+    this.updateTableData()
+    this.updateAvailableStats()
+    this.updateChartData()
+    this.updateView()
   }
 }
 

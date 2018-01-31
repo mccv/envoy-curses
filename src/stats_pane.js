@@ -76,15 +76,6 @@ class StatsPane extends Box {
 
     this.connectionsSeries = null
 
-    this.updateStatNames = () => {
-      let selected = this.statsList.selected
-      let st = this.stats.getStatsTable(new RegExp(`.*${this.statsSearch.content}.*`))
-      this.statsList.setData(st)
-      if (selected < this.statsList.items.length) {
-        this.statsList.select(selected)
-      }
-    }
-
     this.statsList.on('select item', (selected, idx) => {
       if (selected.content) {
         this.chartedStat = selected.content.split(/\s+/)[0]
@@ -92,36 +83,6 @@ class StatsPane extends Box {
         this.updateView()
       }
     })
-
-    this.updateChartData = () => {
-      if (this.chartedStat) {
-        let seriesData = this.stats.getSeries(this.chartedStat)
-        let title = this.chartedStat
-        if (title.length > this.legendWidth) {
-          title = `...${title.substring(title.length - this.legendWidth - 3)}`
-        }
-        if (seriesData) {
-          this.connectionsSeries = [{
-            title: title,
-            stat_name: this.chartedStat,
-            style: {
-              line: theme.pickChartColor(0, 10),
-            },
-            x: seriesData.x,
-            y: seriesData.y,
-          }]
-        }
-      }
-    }
-
-    this.updateView = () => {
-      if (this.parent) {
-        if (this.connectionsSeries) {
-          this.connectionsLine.setData(this.connectionsSeries)
-          this.connectionsLine.setLabel(`${this.chartedStat}`)
-        }
-      }
-    }
 
     this.on('attach', () => {
       this.statsSearch.focus()
@@ -158,21 +119,61 @@ class StatsPane extends Box {
         this.screen.render()
       }
     })
+  }
 
-    this.show = (screen) => {
-      this.append(new Menu({
-        screen: screen,
-        selected: 'Stats',
-      }))
-      screen.append(this)
-      this.append(this.statsSearch)
-      this.append(this.statsList)
-      this.append(this.connectionsLine)
-      this.updateView()
-      this.updateChartData()
-      this.updateStatNames()
-      this.statsSearch.focus()
+  updateStatNames() {
+    let selected = this.statsList.selected
+    let st = this.stats.getStatsTable(new RegExp(`.*${this.statsSearch.content}.*`))
+    this.statsList.setData(st)
+    if (selected < this.statsList.items.length) {
+      this.statsList.select(selected)
     }
+  }
+
+  updateChartData() {
+    if (this.chartedStat) {
+      let seriesData = this.stats.getSeries(this.chartedStat)
+      let title = this.chartedStat
+      if (title.length > this.legendWidth) {
+        title = `...${title.substring(title.length - this.legendWidth - 3)}`
+      }
+      if (seriesData) {
+        this.connectionsSeries = [{
+          title: title,
+          stat_name: this.chartedStat,
+          style: {
+            line: theme.pickChartColor(0, 10),
+          },
+          x: seriesData.x,
+          y: seriesData.y,
+        }]
+      }
+    }
+  }
+
+  updateView() {
+    if (this.parent) {
+      if (this.connectionsSeries) {
+        this.connectionsLine.setData(this.connectionsSeries)
+        this.connectionsLine.setLabel(`${this.chartedStat}`)
+      }
+    }
+  }
+
+
+  show(screen) {
+    this.append(new Menu({
+      screen: screen,
+      selected: 'Stats',
+    }))
+    screen.append(this)
+    this.append(this.statsSearch)
+    this.append(this.statsList)
+    this.append(this.connectionsLine)
+    this.updateView()
+    this.updateChartData()
+    this.updateStatNames()
+    this.statsSearch.focus()
   }
 }
 

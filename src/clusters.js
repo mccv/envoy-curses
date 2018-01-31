@@ -149,11 +149,12 @@ class Clusters extends EventEmitter {
     this.pollStats()
     setInterval(this.pollStats.bind(this), this.pollingInterval)
   }
+
   /**
    * call Envoy's <manager>/clusters endpoint, update metrics and stat names
    * @returns {null} nothing
    */
-  pollStats(){
+  pollStats() {
     http.get(this.clustersURI, res => {
       let body = '';
       res.on('data', data => {
@@ -195,4 +196,5 @@ class Clusters extends EventEmitter {
     })
   }
 }
+
 module.exports = Clusters
