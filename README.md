@@ -34,9 +34,9 @@ memory is not free, and in this program, not carefully monitored).
 
 * This isn't an escape room. Quit with ctl-c.
 * The app is organized into three views.
-** The Server view shows stats about the Envoy process itself
-** The Cluster view shows information about configured clusters.
-** The Stats view provides an interface for arbitrary stats
+  * The Server view shows stats about the Envoy process itself
+  * The Cluster view shows information about configured clusters.
+  * The Stats view provides an interface for arbitrary stats
 * Navigate between views with left and right arrow keys
 
 ## Server
@@ -47,7 +47,6 @@ No interaction is possible. View the available data, or move to another screen.
 
 ## Cluster
 
-* navigate screens with left and right arrow keys
 * on clusters screen, select clusters with up and down arrow keys. Pressing
   enter changes stats to the currently selected cluster.
 * press `/` or `?` to bring up stats selector. Enter selects a new stat to chart.
