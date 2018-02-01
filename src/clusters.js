@@ -1,14 +1,17 @@
-let EventEmitter = require('events')
-let dateFormat = require('dateformat')
+const EventEmitter = require('events')
+const dateFormat = require('dateformat')
 
-const http = require('http');
+const fetch = require('node-fetch')
 
 class Clusters extends EventEmitter {
   constructor(options) {
     super()
+    if (!options.clustersURI) {
+      throw new Error('Clusters ctor: options.clustersURI is required')
+    }
     this.log = options.log
     this.options = options || {}
-    this.clustersURI = this.options.clustersURI || 'http://localhost:9999/clusters'
+    this.clustersURI = this.options.clustersURI
     this.bufferSize = this.options.bufferSize || 20
     this.pollingInterval = this.options.pollingInterval || 1000
     this.bufferIdx = -1
@@ -51,9 +54,11 @@ class Clusters extends EventEmitter {
    * @returns {array} raw stats
    */
   getStat(clusterName, statNamespace, statName) {
-    if (this.clusters[clusterName] &&
-        this.clusters[clusterName][statNamespace] &&
-        this.clusters[clusterName][statNamespace][statName]) {
+    if (
+      this.clusters[clusterName] &&
+      this.clusters[clusterName][statNamespace] &&
+      this.clusters[clusterName][statNamespace][statName]
+    ) {
       return this.clusters[clusterName][statNamespace][statName]
     }
     this.log.error(`unknown series ${clusterName}::${statNamespace}${statName}`)
@@ -155,12 +160,14 @@ class Clusters extends EventEmitter {
    * @returns {null} nothing
    */
   pollStats() {
-    http.get(this.clustersURI, res => {
-      let body = '';
-      res.on('data', data => {
-        body = body + data;
-      });
-      res.on('end', () => {
+    fetch(this.clustersURI)
+      .then(res => {
+        if (res.status !== 200) {
+          throw new Error(`HTTP status: ${res.status} ${res.statusText}`)
+        }
+        return res.text()
+      })
+      .then(body => {
         this.bufferIdx++
         this.bufferIdx = this.bufferIdx % this.bufferSize
 
@@ -193,7 +200,6 @@ class Clusters extends EventEmitter {
         })
         this.emit('updated')
       })
-    })
   }
 }
 
