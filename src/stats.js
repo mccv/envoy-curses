@@ -159,8 +159,8 @@ class Stats extends EventEmitter {
   pollStats() {
     fetch(this.statsURI)
       .then(res => {
-        if (res.statusCode !== 200) {
-          throw new Error(`HTTP status: ${res.statusCode} ${res.statusText}`)
+        if (res.status !== 200) {
+          throw new Error(`HTTP status: ${res.status} ${res.statusText}`)
         }
         return res.text()
       })
