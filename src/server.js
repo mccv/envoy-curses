@@ -1,10 +1,10 @@
 /* eslint camelcase: ["error", {properties: "never"}]*/
 
-let blessed = require('blessed')
-let Theme = require('./theme')
-let Box = blessed.Box
-let contrib = require('blessed-contrib')
-let Menu = require('./menu.js')
+const blessed = require('blessed')
+const Theme = require('./theme')
+const Box = blessed.Box
+const contrib = require('blessed-contrib')
+const Menu = require('./menu.js')
 
 class Server extends Box {
   constructor(options) {
@@ -54,7 +54,6 @@ class Server extends Box {
       },
     ]
 
-
     this.memorySeries = [
       {
         title: 'Allocated',
@@ -71,6 +70,7 @@ class Server extends Box {
         y: [],
       },
     ]
+
     this.memoryLine = contrib.line(
       {
         label: 'MemoryUse',
@@ -100,6 +100,7 @@ class Server extends Box {
         y: [],
       },
     ]
+
     this.connectionsLine = contrib.line(
       {
         label: 'Connections',
@@ -119,7 +120,7 @@ class Server extends Box {
       })
       this.memorySeries.forEach(s => {
         this.log.debug(`getting stat ${s.stat_name}`)
-        let currentSeries = this.stats.getSeriesAsGauge(s.stat_name)
+        const currentSeries = this.stats.getSeriesAsGauge(s.stat_name)
         if (currentSeries) {
           s.x = currentSeries.x
           s.y = currentSeries.y
@@ -129,7 +130,7 @@ class Server extends Box {
       })
       this.connectionsSeries.forEach(s => {
         this.log.debug(`getting connections stat ${s.stat_name}`)
-        let currentSeries = this.stats.getSeriesAsGauge(s.stat_name)
+        const currentSeries = this.stats.getSeriesAsGauge(s.stat_name)
         if (currentSeries) {
           s.x = currentSeries.x
           s.y = currentSeries.y
@@ -146,7 +147,7 @@ class Server extends Box {
 
     this.appendGauges = () => {
       for (let i = 0; i < this.gauges.length; i++) {
-        let label = Box({
+        const label = Box({
           top: Math.floor(i/2) + 3,
           left: `${50*(i%2)}%`,
           height: 1,
@@ -154,7 +155,7 @@ class Server extends Box {
           style: Theme.style.nofocus,
           content: this.gauges[i].label,
         })
-        let target = Box({
+        const target = Box({
           top: Math.floor(i/2) + 3,
           left: `${50*(i%2) + 25}%`,
           height: 1,
