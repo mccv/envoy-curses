@@ -1,10 +1,10 @@
-let blessed = require('blessed')
-let Theme = require('./theme')
-let Box = blessed.Box
-let contrib = require('blessed-contrib')
-let Menu = require('./menu.js')
-let ListTable = blessed.ListTable
-let theme = require('./theme.js')
+const blessed = require('blessed')
+const Theme = require('./theme')
+const Box = blessed.Box
+const contrib = require('blessed-contrib')
+const Menu = require('./menu.js')
+const ListTable = blessed.ListTable
+const theme = require('./theme.js')
 
 class StatsPane extends Box {
   constructor(options) {
@@ -122,8 +122,8 @@ class StatsPane extends Box {
   }
 
   updateStatNames() {
-    let selected = this.statsList.selected
-    let st = this.stats.getStatsTable(new RegExp(`.*${this.statsSearch.content}.*`))
+    const selected = this.statsList.selected
+    const st = this.stats.getStatsTable(new RegExp(`.*${this.statsSearch.content}.*`))
     this.statsList.setData(st)
     if (selected < this.statsList.items.length) {
       this.statsList.select(selected)
@@ -132,7 +132,7 @@ class StatsPane extends Box {
 
   updateChartData() {
     if (this.chartedStat) {
-      let seriesData = this.stats.getSeries(this.chartedStat)
+      const seriesData = this.stats.getSeries(this.chartedStat)
       let title = this.chartedStat
       if (title.length > this.legendWidth) {
         title = `...${title.substring(title.length - this.legendWidth - 3)}`

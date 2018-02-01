@@ -1,6 +1,6 @@
-let blessed = require('blessed')
-let Theme = require('./theme')
-let Box = blessed.Box
+const blessed = require('blessed')
+const Theme = require('./theme')
+const Box = blessed.Box
 
 class Menu extends Box {
   constructor(options) {
@@ -17,8 +17,8 @@ class Menu extends Box {
     this.screen = options.screen
     this.refresh = false
     for (let i = 0; i < this.sections.length; i++) {
-      let spacing = Math.floor(100/this.sections.length)
-      let style = JSON.parse(JSON.stringify(Theme.style.nofocus))
+      const spacing = Math.floor(100/this.sections.length)
+      const style = JSON.parse(JSON.stringify(Theme.style.nofocus))
       if (this.sections[i] === this.options.selected) {
         style.border.fg = Theme.palette.red
       }
