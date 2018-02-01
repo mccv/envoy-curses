@@ -98,9 +98,9 @@ class StatsPane extends Box {
         if (d.name === 'backspace') {
           content = content.substr(0, content.length - 1)
           this.statsSearch.content = content
-        } else if (d.name === 'down') {
+        } else if (d.name === 'down' || d.full === 'C-n') {
           this.statsList.down()
-        } else if (d.name === 'up') {
+        } else if (d.name === 'up' || d.full === 'C-t') {
           this.statsList.up()
         } else if (d.name === 'escape') {
           this.statsSearch.content = ''
