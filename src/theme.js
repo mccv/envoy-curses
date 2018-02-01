@@ -1,6 +1,6 @@
-let blessed = require('blessed')
+const blessed = require('blessed')
 
-let viridisChartPalette = ['#440154', '#440256', '#450457', '#450559', '#46075a', '#46085c',
+const viridisChartPalette = ['#440154', '#440256', '#450457', '#450559', '#46075a', '#46085c',
   '#460a5d', '#460b5e', '#470d60', '#470e61', '#471063', '#471164',
   '#471365', '#481467', '#481668', '#481769', '#48186a', '#481a6c',
   '#481b6d', '#481c6e', '#481d6f', '#481f70', '#482071', '#482173',
@@ -44,24 +44,22 @@ let viridisChartPalette = ['#440154', '#440256', '#450457', '#450559', '#46075a'
   '#e7e419', '#eae51a', '#ece51b', '#efe51c', '#f1e51d', '#f4e61e',
   '#f6e620', '#f8e621', '#fbe723', '#fde725']
 
-// let xTermChartPalette = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+const palette = viridisChartPalette
 
-let palette = viridisChartPalette
-
-let pickChartColor = (seriesIdx, numSeries) => {
-  let idx = Math.floor(palette.length*(seriesIdx/numSeries))
+const pickChartColor = (seriesIdx, numSeries) => {
+  const idx = Math.floor(palette.length*(seriesIdx/numSeries))
   return blessed.colors.hexToRGB(palette[idx])
 }
 
-let numColors = palette.length
-let paletteIncrement = numColors/10
+const numColors = palette.length
+const paletteIncrement = numColors/10
 
-let pickColor = (i) => {
-  let color = palette[Math.floor(i*paletteIncrement)]
+const pickColor = (i) => {
+  const color = palette[Math.floor(i*paletteIncrement)]
   return blessed.colors.hexToRGB(color)
 }
 
-let style = {
+const style = {
   base: {
     fg: pickColor(6),
     bg: 'black',
@@ -78,8 +76,8 @@ let style = {
   },
 }
 
-let applyStyle = (options, selector) => {
-  let toApply = style.base
+const applyStyle = (options, selector) => {
+  const toApply = style.base
   if (selector) {
     toApply = style[selector]
   }
@@ -121,7 +119,7 @@ style.chart = {
   },
 }
 
-let Theme = {
+const Theme = {
   palette: palette,
   style: style,
   pickChartColor: pickChartColor,

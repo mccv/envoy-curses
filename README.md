@@ -19,12 +19,12 @@ proxy. Before you start, you'll need
 # Running
 
 * run with `node src/index.js [stats endpoint] [polling frequency]`, e.g.
-  `node src/index.js localhost:9999`
+  `node src/index.js http://localhost:9999`
   
 # Architecture
 
-The application uses the (blessed)[https://github.com/chjj/blessed] and
-(blessed-contrib)[https://github.com/yaronn/blessed-contrib] libraries to
+The application uses the [blessed](https://github.com/chjj/blessed) and
+[blessed-contrib](https://github.com/yaronn/blessed-contrib) libraries to
 provide a graphical, terminal-based interface to Envoy's admin server. Currently
 it uses the `/clusters` and `/stats` endpoints. It polls for data on a
 configurable interval, keeping a ring buffer in memory for every stat (warning:

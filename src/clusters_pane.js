@@ -1,11 +1,11 @@
 /* eslint camelcase: ["error", {properties: "never"}]*/
 
-let blessed = require('blessed')
-let Theme = require('./theme')
-let Box = blessed.Box
-let contrib = require('blessed-contrib')
-let Menu = require('./menu.js')
-let theme = require('./theme.js')
+const blessed = require('blessed')
+const Theme = require('./theme')
+const Box = blessed.Box
+const contrib = require('blessed-contrib')
+const Menu = require('./menu.js')
+const theme = require('./theme.js')
 
 class ClustersPane extends Box {
   constructor(options) {
@@ -41,36 +41,38 @@ class ClustersPane extends Box {
       width: '50%',
       top: 3,
       height: '100%-3',
-      border: {type: 'line', fg: Theme.style.table.border},
+      border: { type: 'line', fg: Theme.style.table.border },
       columnSpacing: 2,
       columnWidth: [20, 8, 8, 8, 8, 8],
     })
 
-    this.connectionsLine = contrib.line(
-      {
-        label: 'Stats',
-        showLegend: true,
-        top: 3,
-        left: '50%',
-        width: '50%',
-        height: '100%-3',
-        border: {type: 'line', fg: Theme.style.table.border},
-        legend: {width: 20},
-        style: Theme.style.chart,
-      })
+    this.connectionsLine = contrib.line({
+      label: 'Stats',
+      showLegend: true,
+      top: 3,
+      left: '50%',
+      width: '50%',
+      height: '100%-3',
+      border: { type: 'line', fg: Theme.style.table.border },
+      legend: { width: 20 },
+      style: Theme.style.chart,
+    })
 
-    let searchStyle = Object.assign({
-      item: {
-        hover: {
-          bg: Theme.style.base.fg,
+    const searchStyle = Object.assign(
+      {
+        item: {
+          hover: {
+            bg: Theme.style.base.fg,
+          },
+        },
+        selected: {
+          bg: Theme.style.base.focus.bg,
+          fg: Theme.style.base.focus.fg,
+          bold: true,
         },
       },
-      selected: {
-        bg: Theme.style.base.focus.bg,
-        fg: Theme.style.base.focus.fg,
-        bold: true,
-      },
-    }, Theme.style.base)
+      Theme.style.base
+    )
 
     this.statSearch = blessed.List({
       label: 'Stats',
@@ -80,7 +82,7 @@ class ClustersPane extends Box {
       left: 'center',
       hidden: true,
       style: searchStyle,
-      border: {type: 'line', fg: Theme.style.base.border.fg},
+      border: { type: 'line', fg: Theme.style.base.border.fg },
       keys: true,
       interactive: true,
     })
@@ -89,7 +91,7 @@ class ClustersPane extends Box {
      * we've selected a new cluster, so update available stats, the underlying
      * chart model, and update the view
      */
-    this.clustersTable.rows.on('select', (cluster) => {
+    this.clustersTable.rows.on('select', cluster => {
       this.selectedClusterName = cluster.content.split(/\s+/)[0]
       this.updateAvailableStats()
       this.updateChartData()
@@ -115,14 +117,14 @@ class ClustersPane extends Box {
           this.statSearch.show()
           this.screen.render()
           this.statSearch.once('action', (el, selected) => {
-            this.statSearch.hide();
+            this.statSearch.hide()
             if (el) {
               this.selectStat(el.content)
             }
             this.clustersTable.focus()
             this.updateChartData()
             this.updateView()
-          });
+          })
         }
       }
     })
@@ -144,8 +146,8 @@ class ClustersPane extends Box {
    * @returns {null} nothing
    */
   updateAvailableStats() {
-    let hostNames = this.clusters.getHostNames(this.selectedClusterName)
-    let newStats = new Set()
+    const hostNames = this.clusters.getHostNames(this.selectedClusterName)
+    const newStats = new Set()
     for (let i = 0; i < hostNames.length; i++) {
       if (!this.clusterLevelStats.has(hostNames[i])) {
         this.clusters.getStatNames(this.selectedClusterName, hostNames[i]).forEach(s => {
@@ -168,10 +170,9 @@ class ClustersPane extends Box {
    * @returns {null} nothing
    */
   updateTableData() {
-    let clusterNames = this.clusters.getClusterNames()
-    let newTableData = []
-    clusterNames.forEach(c => {
-      let row = []
+    const clusterNames = this.clusters.getClusterNames()
+    const newTableData = clusterNames.map(c => {
+      const row = []
       if (!this.selectedClusterName) {
         this.selectedClusterName = c
         this.updateAvailableStats()
@@ -182,7 +183,7 @@ class ClustersPane extends Box {
       row.push(this.stats.getCurrentStatValue(`cluster.${c}.upstream_rq_total`))
       row.push(this.stats.getCurrentStatValue(`cluster.${c}.membership_total`))
       row.push(this.stats.getCurrentStatValue(`cluster.${c}.membership_healthy`))
-      newTableData.push(row)
+      return row
     })
     this.tableData.data = newTableData
   }
@@ -198,12 +199,14 @@ class ClustersPane extends Box {
       return
     }
     let hostNames = this.clusters.getHostNames(this.selectedClusterName)
-    let series = []
+    const series = []
     for (let i = 0; i < hostNames.length; i++) {
       if (!this.clusterLevelStats.has(hostNames[i])) {
-        let currentSeries = this.clusters.getSeries(this.selectedClusterName,
+        let currentSeries = this.clusters.getSeries(
+          this.selectedClusterName,
           hostNames[i],
-          this.chartedStat)
+          this.chartedStat
+        )
         if (currentSeries) {
           series.push({
             title: hostNames[i],
@@ -237,12 +240,13 @@ class ClustersPane extends Box {
     }
   }
 
-
   show(screen) {
-    this.append(new Menu({
-      screen: screen,
-      selected: 'Clusters',
-    }))
+    this.append(
+      new Menu({
+        screen: screen,
+        selected: 'Clusters',
+      })
+    )
     this.append(this.clustersTable)
     this.append(this.connectionsLine)
     this.append(this.statSearch)
